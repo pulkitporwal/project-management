@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import { useAppStore } from '@/stores/appStore';
+"use client";
+
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+
 import {
   LayoutDashboard,
   FolderKanban,
@@ -17,41 +18,42 @@ import {
   ChevronRight,
   Sparkles,
   Building2,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { NavItem } from "../ui/nav-item";
 
 const navigationItems = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-  { name: 'Projects', href: '/projects', icon: FolderKanban },
-  { name: 'Tasks', href: '/tasks', icon: ListTodo, badge: 5 },
-  { name: 'Kanban Board', href: '/kanban', icon: LayoutDashboard },
-  { name: 'Calendar', href: '/calendar', icon: Calendar },
-  { name: 'Team', href: '/team', icon: Users },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Projects", href: "/dashboard/projects", icon: FolderKanban },
+  { name: "Tasks", href: "/dashboard/tasks", icon: ListTodo, badge: 5 },
+  { name: "Kanban Board", href: "/dashboard/kanban", icon: LayoutDashboard },
+  { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
+  { name: "Team", href: "/dashboard/team", icon: Users },
+  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
 ];
 
 const performanceItems = [
-  { name: 'OKRs', href: '/okrs', icon: Target },
-  { name: 'Reviews', href: '/reviews', icon: MessageSquare },
-  { name: 'AI Insights', href: '/ai-insights', icon: Sparkles },
+  { name: "OKRs", href: "/dashboard/okrs", icon: Target },
+  { name: "Reviews", href: "/dashboard/reviews", icon: MessageSquare },
+  { name: "AI Insights", href: "/dashboard/ai-insights", icon: Sparkles },
 ];
 
 const adminItems = [
-  { name: 'Organization', href: '/organization', icon: Building2 },
-  { name: 'Settings', href: '/settings', icon: Settings },
+  { name: "Organization", href: "/dashboard/organization", icon: Building2 },
+  { name: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
-  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
 
   return (
     <aside
       className={cn(
-        'flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300 ease-in-out',
-        collapsed ? 'w-16' : 'w-64'
+        "flex flex-col h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
+        collapsed ? "w-16" : "w-64"
       )}
     >
       {/* Logo */}
@@ -61,108 +63,126 @@ export function AppSidebar() {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
               <Sparkles className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-lg text-sidebar-foreground">WorkFlow</span>
+            <span className="font-semibold text-lg text-sidebar-foreground">
+              WorkFlow
+            </span>
           </div>
         )}
+
         <Button
           variant="ghost"
           size="icon"
           onClick={() => setCollapsed(!collapsed)}
           className="h-8 w-8 text-sidebar-foreground hover:bg-sidebar-accent"
         >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          {collapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
         </Button>
       </div>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-2">
-        <div className="space-y-1">
+        <div className="space-y-1 flex flex-col gap-3">
           {!collapsed && (
-            <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <p className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Workspace
             </p>
           )}
+
           {navigationItems.map((item) => (
-            <NavLink
+            <NavItem
               key={item.name}
-              to={item.href}
+              href={item.href}
               className={({ isActive }) =>
                 cn(
-                  'sidebar-item',
-                  isActive && 'active',
-                  collapsed && 'justify-center px-2'
+                  "sidebar-item flex gap-3 px-2",
+                  isActive && "active",
+                  collapsed && "justify-center px-2"
                 )
               }
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <item.icon className="w-5 h-5" />
+
               {!collapsed && (
                 <>
                   <span className="flex-1">{item.name}</span>
                   {item.badge && (
-                    <Badge variant="secondary" className="h-5 w-5 p-0 justify-center text-xs">
+                    <Badge
+                      variant="secondary"
+                      className="h-5 w-5 p-0 justify-center text-xs"
+                    >
                       {item.badge}
                     </Badge>
                   )}
                 </>
               )}
-            </NavLink>
+            </NavItem>
           ))}
         </div>
 
-        <div className="mt-6 space-y-1">
+        {/* Performance */}
+        <div className="mt-6 space-y-1 flex flex-col gap-3">
           {!collapsed && (
-            <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <p className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Performance
             </p>
           )}
+
           {performanceItems.map((item) => (
-            <NavLink
+            <NavItem
               key={item.name}
-              to={item.href}
+              href={item.href}
               className={({ isActive }) =>
                 cn(
-                  'sidebar-item',
-                  isActive && 'active',
-                  collapsed && 'justify-center px-2'
+                  "sidebar-item flex gap-3 px-2",
+                  isActive && "active",
+                  collapsed && "justify-center px-2"
                 )
               }
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <item.icon className="w-5 h-5" />
               {!collapsed && <span>{item.name}</span>}
-            </NavLink>
+            </NavItem>
           ))}
         </div>
 
-        <div className="mt-6 space-y-1">
+        {/* Admin */}
+        <div className="mt-6 space-y-1 flex flex-col gap-3">
           {!collapsed && (
-            <p className="px-3 py-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <p className="px-3 text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Admin
             </p>
           )}
+
           {adminItems.map((item) => (
-            <NavLink
+            <NavItem
               key={item.name}
-              to={item.href}
+              href={item.href}
               className={({ isActive }) =>
                 cn(
-                  'sidebar-item',
-                  isActive && 'active',
-                  collapsed && 'justify-center px-2'
+                  "sidebar-item flex gap-3 px-2",
+                  isActive && "active",
+                  collapsed && "justify-center px-2"
                 )
               }
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <item.icon className="w-5 h-5" />
               {!collapsed && <span>{item.name}</span>}
-            </NavLink>
+            </NavItem>
           ))}
         </div>
       </nav>
 
       {/* User Profile */}
-      <div className={cn(
-        'border-t border-sidebar-border p-4',
-        collapsed && 'flex justify-center'
-      )}>
+      <div
+        className={cn(
+          "border-t border-sidebar-border p-4",
+          collapsed && "flex justify-center"
+        )}
+      >
         {collapsed ? (
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-primary text-primary-foreground text-sm">
@@ -180,11 +200,13 @@ export function AppSidebar() {
               <p className="text-sm font-medium text-sidebar-foreground truncate">
                 John Doe
               </p>
-              <p className="text-xs text-muted-foreground truncate">
-                Admin
-              </p>
+              <p className="text-xs text-muted-foreground truncate">Admin</p>
             </div>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-muted-foreground"
+            >
               <Bell className="h-4 w-4" />
             </Button>
           </div>

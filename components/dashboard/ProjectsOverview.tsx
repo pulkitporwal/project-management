@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 
 export function ProjectsOverview() {
   const projects = useAppStore((state) => state.projects);
@@ -24,7 +24,7 @@ export function ProjectsOverview() {
     >
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold">Active Projects</h2>
-        <Link to="/projects">
+        <Link href="/projects">
           <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
             View all
             <ArrowRight className="h-4 w-4" />
