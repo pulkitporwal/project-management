@@ -64,11 +64,6 @@ const statusConfig = {
     rejected: { label: 'Rejected', color: 'bg-destructive/10 text-destructive', icon: AlertCircle },
 };
 
-const statusConfig = {
-    completed: { label: 'Completed', color: 'bg-success/10 text-success', icon: CheckCircle2 },
-    pending: { label: 'Pending Review', color: 'bg-warning/10 text-warning', icon: Clock },
-    'in-progress': { label: 'In Progress', color: 'bg-info/10 text-info', icon: AlertCircle },
-};
 
 export default function Reviews() {
     const [data, setData] = useState<any[]>([]);
