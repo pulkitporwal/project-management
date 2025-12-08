@@ -1,5 +1,4 @@
 "use client"
-import { useAppStore } from '@/stores/appStore';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +17,9 @@ import {
     AlertCircle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+import { apiGet } from '@/lib/api';
+import { toast } from '@/components/ui/sonner';
 
 const reviews = [
     {
@@ -56,10 +58,25 @@ const statusConfig = {
     completed: { label: 'Completed', color: 'bg-success/10 text-success', icon: CheckCircle2 },
     pending: { label: 'Pending Review', color: 'bg-warning/10 text-warning', icon: Clock },
     'in-progress': { label: 'In Progress', color: 'bg-info/10 text-info', icon: AlertCircle },
+    draft: { label: 'Draft', color: 'bg-muted text-muted-foreground', icon: AlertCircle },
+    submitted: { label: 'Submitted', color: 'bg-info/10 text-info', icon: AlertCircle },
+    approved: { label: 'Approved', color: 'bg-success/10 text-success', icon: CheckCircle2 },
+    rejected: { label: 'Rejected', color: 'bg-destructive/10 text-destructive', icon: AlertCircle },
+};
+
+const statusConfig = {
+    completed: { label: 'Completed', color: 'bg-success/10 text-success', icon: CheckCircle2 },
+    pending: { label: 'Pending Review', color: 'bg-warning/10 text-warning', icon: Clock },
+    'in-progress': { label: 'In Progress', color: 'bg-info/10 text-info', icon: AlertCircle },
 };
 
 export default function Reviews() {
-    const teamMembers = useAppStore((state) => state.teamMembers);
+    const [data, setData] = useState<any[]>([]);
+    useEffect(() => {
+        apiGet<any[]>("/api/performance-reviews")
+            .then((d) => setData(d))
+            .catch((err) => toast.error(err.message || "Failed to load reviews"));
+    }, []);
 
     return (
         <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -129,13 +146,13 @@ export default function Reviews() {
 
                         {/* Reviews List */}
                         <div className="space-y-4">
-                            {reviews.map((review, index) => {
-                                const status = statusConfig[review.status as keyof typeof statusConfig];
+                            {data.map((review: any, index) => {
+                                const status = statusConfig[review.status as keyof typeof statusConfig] || statusConfig.draft;
                                 const StatusIcon = status.icon;
 
                                 return (
                                     <motion.div
-                                        key={review.id}
+                                        key={review._id}
                                         initial={{ opacity: 0, y: 20 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.3, delay: 0.05 * index }}
@@ -145,63 +162,55 @@ export default function Reviews() {
                                                 <div className="flex items-center gap-6">
                                                     <Avatar className="h-12 w-12">
                                                         <AvatarFallback className="bg-primary/10 text-primary">
-                                                            {review.employee.avatar}
+                                                            {String(review.userId || '').slice(0,2).toUpperCase()}
                                                         </AvatarFallback>
                                                     </Avatar>
 
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-3 mb-1">
-                                                            <h3 className="font-semibold">{review.employee.name}</h3>
+                                                            <h3 className="font-semibold">{review.cycle} {review.year}</h3>
                                                             <Badge className={cn(status.color)}>
                                                                 <StatusIcon className="h-3 w-3 mr-1" />
                                                                 {status.label}
                                                             </Badge>
                                                         </div>
                                                         <p className="text-sm text-muted-foreground">
-                                                            {review.employee.role} • {review.cycle}
+                                                            {review.overallRating} • {new Date(review.reviewDate).toLocaleDateString()}
                                                         </p>
                                                     </div>
 
                                                     <div className="hidden lg:flex items-center gap-8">
                                                         <div className="text-center">
-                                                            <p className="text-xs text-muted-foreground mb-1">Self</p>
+                                                            <p className="text-xs text-muted-foreground mb-1">Score</p>
                                                             <div className="flex items-center gap-1">
                                                                 <Star className="h-4 w-4 text-warning fill-warning" />
                                                                 <span className="font-semibold">
-                                                                    {review.selfScore || '-'}
+                                                                    {review.score}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                         <div className="text-center">
-                                                            <p className="text-xs text-muted-foreground mb-1">Manager</p>
+                                                            <p className="text-xs text-muted-foreground mb-1">Max</p>
                                                             <div className="flex items-center gap-1">
                                                                 <Star className="h-4 w-4 text-warning fill-warning" />
                                                                 <span className="font-semibold">
-                                                                    {review.managerScore || '-'}
+                                                                    {review.maxScore}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                         <div className="text-center">
-                                                            <p className="text-xs text-muted-foreground mb-1">Peer</p>
+                                                            <p className="text-xs text-muted-foreground mb-1">Date</p>
                                                             <div className="flex items-center gap-1">
                                                                 <Star className="h-4 w-4 text-warning fill-warning" />
                                                                 <span className="font-semibold">
-                                                                    {review.peerScore || '-'}
+                                                                    {new Date(review.reviewDate).toLocaleDateString()}
                                                                 </span>
                                                             </div>
                                                         </div>
                                                     </div>
 
                                                     <div className="text-right">
-                                                        {review.status === 'completed' ? (
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Completed {review.completedDate}
-                                                            </p>
-                                                        ) : (
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Due {review.dueDate}
-                                                            </p>
-                                                        )}
+                                                        <p className="text-sm text-muted-foreground">{status.label}</p>
                                                     </div>
                                                 </div>
                                             </CardContent>

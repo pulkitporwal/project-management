@@ -24,6 +24,9 @@ import {
     MoreHorizontal,
 } from 'lucide-react';
 import { useAppStore } from '@/stores/appStore';
+import { useEffect, useState } from 'react';
+import { apiGet } from '@/lib/api';
+import { toast } from '@/components/ui/sonner';
 
 const departments = [
     { id: 1, name: 'Engineering', headCount: 12, lead: 'Sarah Chen' },
@@ -32,12 +35,18 @@ const departments = [
     { id: 4, name: 'Marketing', headCount: 6, lead: 'Emily Davis' },
 ];
 
-const auditLogs = [
-    { id: 1, user: 'John Doe', action: 'Updated project settings', target: 'Website Redesign', time: '2 hours ago' },
-    { id: 2, user: 'Sarah Chen', action: 'Added team member', target: 'Emily Davis', time: '5 hours ago' },
-    { id: 3, user: 'Alex Johnson', action: 'Modified role permissions', target: 'Editor role', time: '1 day ago' },
-    { id: 4, user: 'John Doe', action: 'Created new project', target: 'Mobile App v2.0', time: '2 days ago' },
-];
+export default function Organization() {
+    const teamMembers = useAppStore((state) => state.teamMembers);
+    const [logs, setLogs] = useState<any[]>([]);
+    useEffect(() => {
+        apiGet<any[]>("/api/audit-logs")
+            .then((data) => {
+                setLogs(data);
+            })
+            .catch((err) => {
+                toast.error(err.message || "Failed to load audit logs");
+            });
+    }, []);
 
 const roles = [
     { id: 1, name: 'Admin', members: 2, permissions: ['Full access'] },
@@ -45,9 +54,6 @@ const roles = [
     { id: 3, name: 'Member', members: 12, permissions: ['View projects', 'Manage tasks', 'Add comments'] },
     { id: 4, name: 'Viewer', members: 3, permissions: ['View only'] },
 ];
-
-export default function Organization() {
-    const teamMembers = useAppStore((state) => state.teamMembers);
 
     return (
         <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -210,21 +216,20 @@ export default function Organization() {
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {auditLogs.map((log) => (
-                                                <TableRow key={log.id}>
+                                            {logs.map((log) => (
+                                                <TableRow key={log._id}>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
                                                             <Avatar className="h-8 w-8">
                                                                 <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                                                    {log.user.split(' ').map(n => n[0]).join('')}
+                                                                    {String(log.userId || '').slice(0,2).toUpperCase()}
                                                                 </AvatarFallback>
                                                             </Avatar>
-                                                            <span className="font-medium">{log.user}</span>
+                                                            <span className="font-medium">{log.action}</span>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell>{log.action}</TableCell>
-                                                    <TableCell className="text-muted-foreground">{log.target}</TableCell>
-                                                    <TableCell className="text-muted-foreground">{log.time}</TableCell>
+                                                    <TableCell className="text-muted-foreground">{log.module}</TableCell>
+                                                    <TableCell className="text-muted-foreground">{new Date(log.timestamp).toLocaleString()}</TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>

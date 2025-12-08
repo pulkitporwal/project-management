@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Search, Plus, Bell, Command } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,9 +12,26 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { toast } from '@/components/ui/sonner';
+import { apiGet } from '@/lib/api';
 
 export function TopBar() {
   const [searchOpen, setSearchOpen] = useState(false);
+  const [notifications, setNotifications] = useState<any[]>([]);
+
+  useEffect(() => {
+    let mounted = true;
+    apiGet<any[]>("/api/notifications?unread=true&limit=10")
+      .then((data) => {
+        if (mounted) setNotifications(data);
+      })
+      .catch((err) => {
+        toast.error(err.message || "Failed to load notifications");
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <header className="h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-6">
@@ -64,7 +81,7 @@ export function TopBar() {
             <Button variant="ghost" size="icon" className="relative">
               <Bell className="h-5 w-5" />
               <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 justify-center text-[10px]">
-                3
+                {notifications.length}
               </Badge>
             </Button>
           </DropdownMenuTrigger>
@@ -72,21 +89,16 @@ export function TopBar() {
             <DropdownMenuLabel>Notifications</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <div className="max-h-80 overflow-y-auto">
-              <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-                <p className="text-sm font-medium">New task assigned</p>
-                <p className="text-xs text-muted-foreground">Sarah assigned you "Design Review"</p>
-                <p className="text-xs text-muted-foreground">2 minutes ago</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-                <p className="text-sm font-medium">Project deadline updated</p>
-                <p className="text-xs text-muted-foreground">Website Redesign deadline moved</p>
-                <p className="text-xs text-muted-foreground">1 hour ago</p>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex flex-col items-start gap-1 py-3">
-                <p className="text-sm font-medium">Review cycle started</p>
-                <p className="text-xs text-muted-foreground">Q1 Performance Reviews are now open</p>
-                <p className="text-xs text-muted-foreground">3 hours ago</p>
-              </DropdownMenuItem>
+              {notifications.length === 0 && (
+                <div className="p-4 text-sm text-muted-foreground">No new notifications</div>
+              )}
+              {notifications.map((n) => (
+                <DropdownMenuItem key={n._id} className="flex flex-col items-start gap-1 py-3">
+                  <p className="text-sm font-medium">{n.title}</p>
+                  <p className="text-xs text-muted-foreground">{n.message}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(n.createdAt).toLocaleString()}</p>
+                </DropdownMenuItem>
+              ))}
             </div>
           </DropdownMenuContent>
         </DropdownMenu>

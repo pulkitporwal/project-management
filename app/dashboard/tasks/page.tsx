@@ -1,5 +1,4 @@
 "use client"
-import { useAppStore } from '@/stores/appStore';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +29,9 @@ import {
     ArrowUpDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useEffect, useMemo, useState } from 'react';
+import { apiGet } from '@/lib/api';
+import { toast } from '@/components/ui/sonner';
 
 const statusColors = {
     backlog: 'badge-todo',
@@ -55,15 +57,28 @@ const priorityColors = {
 };
 
 export default function Tasks() {
-    const tasks = useAppStore((state) => state.tasks);
-    const projects = useAppStore((state) => state.projects);
-    const teamMembers = useAppStore((state) => state.teamMembers);
+    const [tasks, setTasks] = useState<any[]>([]);
+    const [projects, setProjects] = useState<any[]>([]);
 
-    const getProject = (projectId: string) =>
-        projects.find((p) => p.id === projectId);
+    useEffect(() => {
+        Promise.all([
+            apiGet<any[]>("/api/tasks"),
+            apiGet<any[]>("/api/projects"),
+        ])
+            .then(([t, p]) => {
+                setTasks(t);
+                setProjects(p);
+            })
+            .catch((err) => {
+                toast.error(err.message || "Failed to load tasks");
+            });
+    }, []);
 
-    const getAssignee = (assigneeId?: string) =>
-        teamMembers.find((m) => m.id === assigneeId);
+    const projectById = useMemo(() => {
+        const map: Record<string, any> = {};
+        projects.forEach((p: any) => { map[p._id] = p; });
+        return map;
+    }, [projects]);
 
     return (
         <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -135,13 +150,13 @@ export default function Tasks() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {tasks.map((task, index) => {
-                                const project = getProject(task.projectId);
-                                const assignee = getAssignee(task.assigneeId);
+                            {tasks.map((task: any, index) => {
+                                const project = projectById[String(task.projectId)];
+                                const uiStatus = task.status === 'completed' ? 'done' : (task.status === 'in-review' ? 'review' : task.status);
 
                                 return (
                                     <motion.tr
-                                        key={task.id}
+                                        key={task._id}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ duration: 0.2, delay: 0.02 * index }}
@@ -149,7 +164,7 @@ export default function Tasks() {
                                     >
                                         <TableCell>
                                             <Checkbox
-                                                checked={task.status === 'done'}
+                                                checked={uiStatus === 'done'}
                                                 className="data-[state=checked]:bg-success data-[state=checked]:border-success"
                                             />
                                         </TableCell>
@@ -163,9 +178,9 @@ export default function Tasks() {
                                                 >
                                                     {task.title}
                                                 </p>
-                                                {task.tags.length > 0 && (
+                                                {task.labels && task.labels.length > 0 && (
                                                     <div className="flex gap-1 mt-1">
-                                                        {task.tags.slice(0, 2).map((tag) => (
+                                                        {task.labels.slice(0, 2).map((tag: string) => (
                                                             <Badge
                                                                 key={tag}
                                                                 variant="secondary"
@@ -181,17 +196,13 @@ export default function Tasks() {
                                         <TableCell>
                                             {project && (
                                                 <div className="flex items-center gap-2">
-                                                    <span
-                                                        className="w-2 h-2 rounded-full"
-                                                        style={{ backgroundColor: project.color }}
-                                                    />
-                                                    <span className="text-sm">{project.name}</span>
+                                                    <span className="text-sm">{project.title}</span>
                                                 </div>
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge className={cn('badge-status', statusColors[task.status])}>
-                                                {statusLabels[task.status]}
+                                            <Badge className={cn('badge-status', statusColors[uiStatus])}>
+                                                {statusLabels[uiStatus]}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
@@ -200,16 +211,14 @@ export default function Tasks() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            {assignee && (
-                                                <div className="flex items-center gap-2">
-                                                    <Avatar className="h-7 w-7">
-                                                        <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                                            {assignee.avatar}
-                                                        </AvatarFallback>
-                                                    </Avatar>
-                                                    <span className="text-sm">{assignee.name}</span>
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-7 w-7">
+                                                    <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                                        {String(task.assignedTo || '').slice(0,2).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <span className="text-sm">{task.assignedTo ? String(task.assignedTo) : '—'}</span>
+                                            </div>
                                         </TableCell>
                                         <TableCell>
                                             {task.dueDate && (

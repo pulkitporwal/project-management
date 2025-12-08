@@ -15,53 +15,27 @@ import {
     Circle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-
-const objectives = [
-    {
-        id: 1,
-        title: 'Increase Product Market Share',
-        quarter: 'Q1 2024',
-        progress: 72,
-        status: 'on-track',
-        keyResults: [
-            { id: 1, title: 'Launch 3 new features', progress: 100, target: 3, current: 3 },
-            { id: 2, title: 'Achieve 10,000 active users', progress: 85, target: 10000, current: 8500 },
-            { id: 3, title: 'Reduce churn rate to 5%', progress: 60, target: 5, current: 7 },
-        ],
-    },
-    {
-        id: 2,
-        title: 'Improve Customer Satisfaction',
-        quarter: 'Q1 2024',
-        progress: 55,
-        status: 'at-risk',
-        keyResults: [
-            { id: 1, title: 'Achieve NPS score of 50+', progress: 80, target: 50, current: 45 },
-            { id: 2, title: 'Response time under 2 hours', progress: 40, target: 2, current: 3.2 },
-            { id: 3, title: 'Resolve 95% tickets in first contact', progress: 45, target: 95, current: 78 },
-        ],
-    },
-    {
-        id: 3,
-        title: 'Scale Engineering Team',
-        quarter: 'Q1 2024',
-        progress: 85,
-        status: 'on-track',
-        keyResults: [
-            { id: 1, title: 'Hire 5 senior engineers', progress: 100, target: 5, current: 5 },
-            { id: 2, title: 'Complete onboarding program', progress: 80, target: 100, current: 80 },
-            { id: 3, title: 'Establish mentorship program', progress: 75, target: 100, current: 75 },
-        ],
-    },
-];
+import { useEffect, useMemo, useState } from 'react';
+import { apiGet } from '@/lib/api';
+import { toast } from '@/components/ui/sonner';
 
 const statusColors = {
-    'on-track': 'bg-success/10 text-success',
+    'not-started': 'bg-muted/50 text-muted-foreground',
+    'in-progress': 'bg-info/10 text-info',
+    'completed': 'bg-success/10 text-success',
     'at-risk': 'bg-warning/10 text-warning',
-    'behind': 'bg-destructive/10 text-destructive',
+    'archived': 'bg-muted/50 text-muted-foreground',
+    'cancelled': 'bg-destructive/10 text-destructive',
 };
 
 export default function OKRs() {
+    const [okrs, setOkrs] = useState<any[]>([]);
+    useEffect(() => {
+        apiGet<any[]>("/api/okrs")
+            .then((data) => setOkrs(data))
+            .catch((err) => toast.error(err.message || "Failed to load OKRs"));
+    }, []);
+
     return (
         <div className="p-6 lg:p-8 max-w-7xl mx-auto">
                 {/* Header */}
@@ -101,9 +75,9 @@ export default function OKRs() {
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                     {[
-                        { title: 'Total Objectives', value: 3, icon: Target, color: 'text-primary' },
-                        { title: 'On Track', value: 2, icon: TrendingUp, color: 'text-success' },
-                        { title: 'Key Results', value: 9, icon: CheckCircle2, color: 'text-info' },
+                        { title: 'Total Objectives', value: okrs.length, icon: Target, color: 'text-primary' },
+                        { title: 'Active', value: okrs.filter((o: any) => o.status === 'active').length, icon: TrendingUp, color: 'text-success' },
+                        { title: 'Key Results', value: okrs.reduce((sum: number, o: any) => sum + (o.keyResults?.length || 0), 0), icon: CheckCircle2, color: 'text-info' },
                     ].map((stat, index) => (
                         <motion.div
                             key={stat.title}
@@ -128,9 +102,9 @@ export default function OKRs() {
 
                 {/* Objectives List */}
                 <div className="space-y-6">
-                    {objectives.map((objective, index) => (
+                    {okrs.map((objective: any, index) => (
                         <motion.div
-                            key={objective.id}
+                            key={objective._id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: 0.1 * index }}
@@ -143,38 +117,40 @@ export default function OKRs() {
                                                 <Target className="h-5 w-5 text-primary" />
                                             </div>
                                             <div>
-                                                <CardTitle className="text-lg">{objective.title}</CardTitle>
+                                                <CardTitle className="text-lg">{objective.objective}</CardTitle>
                                                 <div className="flex items-center gap-3 mt-2">
-                                                    <Badge variant="secondary">{objective.quarter}</Badge>
+                                                    <Badge variant="secondary">Q{objective.quarter} {objective.year}</Badge>
                                                     <Badge
                                                         className={cn(
                                                             'capitalize',
-                                                            statusColors[objective.status as keyof typeof statusColors]
+                                                            statusColors[objective.status as keyof typeof statusColors] || 'bg-muted/50 text-muted-foreground'
                                                         )}
                                                     >
-                                                        {objective.status.replace('-', ' ')}
+                                                        {objective.status}
                                                     </Badge>
                                                 </div>
                                             </div>
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-2xl font-bold">{objective.progress}%</p>
+                                            <p className="text-2xl font-bold">{objective.progress ?? 0}%</p>
                                             <p className="text-sm text-muted-foreground">Complete</p>
                                         </div>
                                     </div>
                                 </CardHeader>
                                 <CardContent>
                                     <div className="mb-4">
-                                        <Progress value={objective.progress} className="h-2" />
+                                        <Progress value={objective.progress ?? 0} className="h-2" />
                                     </div>
 
                                     <div className="space-y-4">
-                                        {objective.keyResults.map((kr) => (
+                                        {objective.keyResults?.map((kr: any, i: number) => {
+                                            const pct = kr.targetValue ? Math.min(100, Math.round((kr.currentValue / kr.targetValue) * 100)) : 0;
+                                            return (
                                             <div
-                                                key={kr.id}
+                                                key={i}
                                                 className="flex items-center gap-4 p-3 rounded-lg bg-muted/30"
                                             >
-                                                {kr.progress === 100 ? (
+                                                {pct === 100 ? (
                                                     <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0" />
                                                 ) : (
                                                     <Circle className="h-5 w-5 text-muted-foreground flex-shrink-0" />
@@ -182,26 +158,27 @@ export default function OKRs() {
                                                 <div className="flex-1 min-w-0">
                                                     <p className="text-sm font-medium">{kr.title}</p>
                                                     <div className="flex items-center gap-2 mt-1">
-                                                        <Progress value={kr.progress} className="h-1.5 flex-1 max-w-48" />
+                                                        <Progress value={pct} className="h-1.5 flex-1 max-w-48" />
                                                         <span className="text-xs text-muted-foreground">
-                                                            {kr.current} / {kr.target}
+                                                            {kr.currentValue} / {kr.targetValue} {kr.unit}
                                                         </span>
                                                     </div>
                                                 </div>
                                                 <Badge
                                                     variant="secondary"
                                                     className={cn(
-                                                        kr.progress >= 70
+                                                        pct >= 70
                                                             ? 'text-success'
-                                                            : kr.progress >= 40
+                                                            : pct >= 40
                                                                 ? 'text-warning'
                                                                 : 'text-destructive'
                                                     )}
                                                 >
-                                                    {kr.progress}%
+                                                    {pct}%
                                                 </Badge>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </CardContent>
                             </Card>

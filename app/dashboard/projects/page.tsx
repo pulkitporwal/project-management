@@ -1,11 +1,9 @@
 "use client"
-import { useAppStore } from '@/stores/appStore';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
     Search,
@@ -13,20 +11,25 @@ import {
     Filter,
     MoreHorizontal,
     Calendar,
-    Users,
     FolderKanban,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { apiGet } from '@/lib/api';
+import { toast } from '@/components/ui/sonner';
 
 export default function Projects() {
-    const projects = useAppStore((state) => state.projects);
-    const teamMembers = useAppStore((state) => state.teamMembers);
-    const tasks = useAppStore((state) => state.tasks);
+    const [projects, setProjects] = useState<any[]>([]);
 
-    const getProjectMembers = (teamIds: string[]) =>
-        teamMembers.filter((m) => teamIds.includes(m.id));
-
-    const getProjectTaskCount = (projectId: string) =>
-        tasks.filter((t) => t.projectId === projectId).length;
+    useEffect(() => {
+        apiGet<any[]>("/api/projects")
+            .then((data) => {
+                setProjects(data);
+                toast.success("Projects loaded");
+            })
+            .catch((err) => {
+                toast.error(err.message || "Failed to load projects");
+            });
+    }, []);
 
     return (
         <div className="p-6 lg:p-8 max-w-7xl mx-auto">
@@ -66,9 +69,9 @@ export default function Projects() {
 
                 {/* Projects Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {projects.map((project, index) => (
+                    {projects.map((project: any, index) => (
                         <motion.div
-                            key={project.id}
+                            key={project._id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: 0.05 * index }}
@@ -77,17 +80,14 @@ export default function Projects() {
                                 <CardHeader className="pb-4">
                                     <div className="flex items-start justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div
-                                                className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                                style={{ backgroundColor: project.color + '20' }}
-                                            >
+                                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-primary/10">
                                                 <FolderKanban
                                                     className="h-5 w-5"
-                                                    style={{ color: project.color }}
+                                                    style={{ color: 'var(--color-primary)' }}
                                                 />
                                             </div>
                                             <div>
-                                                <h3 className="font-semibold">{project.name}</h3>
+                                                <h3 className="font-semibold">{project.title}</h3>
                                                 <Badge
                                                     variant="secondary"
                                                     className="mt-1 text-xs capitalize"
@@ -114,17 +114,17 @@ export default function Projects() {
                                         <div>
                                             <div className="flex justify-between text-sm mb-2">
                                                 <span className="text-muted-foreground">Progress</span>
-                                                <span className="font-medium">{project.progress}%</span>
+                                                <span className="font-medium">{project.progress || 0}%</span>
                                             </div>
-                                            <Progress value={project.progress} className="h-2" />
+                                            <Progress value={project.progress || 0} className="h-2" />
                                         </div>
 
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                {project.dueDate && (
+                                                {project.endDate && (
                                                     <div className="flex items-center gap-1.5">
                                                         <Calendar className="h-4 w-4" />
-                                                        {new Date(project.dueDate).toLocaleDateString(
+                                                        {new Date(project.endDate).toLocaleDateString(
                                                             'en-US',
                                                             {
                                                                 month: 'short',
@@ -132,32 +132,6 @@ export default function Projects() {
                                                             }
                                                         )}
                                                     </div>
-                                                )}
-                                                <div className="flex items-center gap-1.5">
-                                                    <Users className="h-4 w-4" />
-                                                    {getProjectTaskCount(project.id)} tasks
-                                                </div>
-                                            </div>
-
-                                            <div className="flex -space-x-2">
-                                                {getProjectMembers(project.teamIds)
-                                                    .slice(0, 3)
-                                                    .map((member) => (
-                                                        <Avatar
-                                                            key={member.id}
-                                                            className="h-7 w-7 border-2 border-background"
-                                                        >
-                                                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                                                                {member.avatar}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                    ))}
-                                                {getProjectMembers(project.teamIds).length > 3 && (
-                                                    <Avatar className="h-7 w-7 border-2 border-background">
-                                                        <AvatarFallback className="text-xs bg-muted text-muted-foreground">
-                                                            +{getProjectMembers(project.teamIds).length - 3}
-                                                        </AvatarFallback>
-                                                    </Avatar>
                                                 )}
                                             </div>
                                         </div>
