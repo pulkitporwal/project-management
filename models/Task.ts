@@ -174,12 +174,12 @@ taskSchema.index({ assignedTo: 1, status: 1 });
 taskSchema.index({ projectId: 1, assignedTo: 1 });
 
 // Virtuals
-taskSchema.virtual('isOverdue').get(function() {
+taskSchema.virtual('isOverdue').get(function () {
   if (!this.dueDate || this.status === 'completed') return false;
   return new Date() > this.dueDate;
 });
 
-taskSchema.virtual('timeTrackingEfficiency').get(function() {
+taskSchema.virtual('timeTrackingEfficiency').get(function () {
   if (!this.estimatedHours || this.estimatedHours === 0) return null;
   return this.estimatedHours / this.loggedHours;
 });
@@ -197,7 +197,7 @@ taskSchema.virtual('timeLogs', {
 });
 
 // Pre-save middleware
-taskSchema.pre('save', function(next) {
+taskSchema.pre('save', function (next) {
   // Update actual dates based on status changes
   if (this.isModified('status')) {
     if (this.status === 'in-progress' && !this.actualStartDate) {
@@ -208,11 +208,11 @@ taskSchema.pre('save', function(next) {
       this.completionPercentage = 100;
     }
   }
-  
+
   // Validate dates
   if (this.startDate && this.dueDate && this.startDate >= this.dueDate) {
-    next(new Error('Start date must be before due date'));
-  } 
+    new Error('Start date must be before due date')
+  }
 });
 
 export const Task = mongoose.model<ITask>('Task', taskSchema);

@@ -399,28 +399,28 @@ settingsSchema.virtual('team', {
 });
 
 // Validation to ensure settings belong to either user or team, not both
-settingsSchema.pre('validate', function(next) {
+settingsSchema.pre('validate', function (next) {
   if (!this.userId && !this.teamId) {
-    next(new Error('Settings must belong to either a user or team'));
+    new Error('Settings must belong to either a user or team')
   } else if (this.userId && this.teamId) {
-    next(new Error('Settings cannot belong to both user and team'));
-  } 
+    new Error('Settings cannot belong to both user and team')
+  }
 });
 
 // Static methods
-settingsSchema.statics.findByUser = function(userId: mongoose.Types.ObjectId) {
+settingsSchema.statics.findByUser = function (userId: mongoose.Types.ObjectId) {
   return this.findOne({ userId });
 };
 
-settingsSchema.statics.findByTeam = function(teamId: mongoose.Types.ObjectId) {
+settingsSchema.statics.findByTeam = function (teamId: mongoose.Types.ObjectId) {
   return this.findOne({ teamId });
 };
 
-settingsSchema.statics.createDefaultForUser = function(userId: mongoose.Types.ObjectId) {
+settingsSchema.statics.createDefaultForUser = function (userId: mongoose.Types.ObjectId) {
   return this.create({ userId });
 };
 
-settingsSchema.statics.createDefaultForTeam = function(teamId: mongoose.Types.ObjectId) {
+settingsSchema.statics.createDefaultForTeam = function (teamId: mongoose.Types.ObjectId) {
   return this.create({ teamId });
 };
 
