@@ -21,6 +21,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useParams } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+import { canManageTeams } from '@/lib/roles'
 
 interface Team {
   _id: string
@@ -49,6 +51,7 @@ export default function Teams() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [availableUsers, setAvailableUsers] = useState<TeamMember[]>([])
   const { organisationId } = useParams()
+  const { data: session } = useSession()
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -68,7 +71,7 @@ export default function Teams() {
 
     const fetchUsers = async () => {
       try {
-        const response = await fetch(`/api/${organisationId}/users`)
+        const response = await fetch(`/api/${organisationId}/members`)
         if (response.ok) {
           const data = await response.json()
           setAvailableUsers(data)
@@ -93,12 +96,17 @@ export default function Teams() {
 
   const handleCreateTeam = async (formData: any) => {
     try {
-      const response = await fetch('/api/teams', {
+      const response = await fetch(`/api/${organisationId}/teams`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name,
+          description: formData.description,
+          members: formData.memberIds,
+          leadId: formData.leadId || null,
+        }),
       })
 
       if (!response.ok) {
@@ -117,7 +125,7 @@ export default function Teams() {
     if (!confirm('Are you sure you want to delete this team?')) return
 
     try {
-      const response = await fetch(`/api/teams/${teamId}`, {
+      const response = await fetch(`/api/${organisationId}/teams/${teamId}`, {
         method: 'DELETE',
       })
 
@@ -158,16 +166,18 @@ export default function Teams() {
           <h1 className="text-2xl font-bold">Teams</h1>
           <p className="text-gray-600">Manage your project teams and collaborations</p>
         </div>
-        <CreateTeamDialog
-          onTeamCreated={handleCreateTeam}
-          availableUsers={availableUsers}
-          trigger={
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create Team
-            </Button>
-          }
-        />
+        {canManageTeams(session) && (
+          <CreateTeamDialog
+            onTeamCreated={handleCreateTeam}
+            availableUsers={availableUsers}
+            trigger={
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Team
+              </Button>
+            }
+          />
+        )}
       </div>
 
       {/* Filters */}
@@ -215,17 +225,21 @@ export default function Teams() {
                   <p className="text-sm text-gray-600">{team.description}</p>
                 </div>
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0"
-                    onClick={() => handleDeleteTeam(team._id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
+                  {canManageTeams(session) && (
+                    <>
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 w-6 p-0"
+                        onClick={() => handleDeleteTeam(team._id)}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </>
+                  )}
                 </div>
               </div>
             </CardHeader>
@@ -245,9 +259,11 @@ export default function Teams() {
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium">Team Members</span>
-                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                      <UserPlus className="h-3 w-3" />
-                    </Button>
+                    {canManageTeams(session) && (
+                      <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                        <UserPlus className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                   <div className="space-y-2">
                     {/* Team Lead */}
@@ -321,16 +337,18 @@ export default function Teams() {
               <p className="text-gray-600 mb-4">
                 {searchQuery ? 'Try adjusting your search or filters' : 'Create your first team to get started'}
               </p>
-              <CreateTeamDialog
-                onTeamCreated={handleCreateTeam}
-                availableUsers={availableUsers}
-                trigger={
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Team
-                  </Button>
-                }
-              />
+              {canManageTeams(session) && (
+                <CreateTeamDialog
+                  onTeamCreated={handleCreateTeam}
+                  availableUsers={availableUsers}
+                  trigger={
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Team
+                    </Button>
+                  }
+                />
+              )}
             </div>
           </CardContent>
         </Card>

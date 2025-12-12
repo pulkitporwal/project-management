@@ -67,32 +67,32 @@ export async function POST(
     try {
         // Add individual members
         if (userIds && Array.isArray(userIds)) {
-            // Verify users exist
-            const users = await User.find({ _id: { $in: userIds } });
+            const users = await User.find({
+                _id: { $in: userIds },
+                associatedWith: { $elemMatch: { organisationId, isActive: true } }
+            });
             if (users.length !== userIds.length) {
-                return NextResponse.json({ error: "One or more users not found" }, { status: 404 });
+                return NextResponse.json({ error: "Some users are not members of this organization" }, { status: 400 });
             }
 
-            // Add members to project (avoid duplicates)
             const newMembers = userIds.filter((userId: string) =>
-                !project.members.includes(userId as any)
+                !project.members.map(String).includes(userId)
             );
 
             if (newMembers.length > 0) {
-                project.members.push(...newMembers);
+                project.members.push(...(newMembers as any));
                 await project.save();
 
-                // Log the action
                 await AuditLog.create({
                     userId: session.user.id,
                     action: "add_members",
                     module: "projects",
                     entityId: project._id,
-                    details: `Added ${newMembers.length} members to project`,
+                    details: { addedUserIds: newMembers },
                     ipAddress: request.headers.get("x-forwarded-for") || "localhost",
                     userAgent: request.headers.get("user-agent") || "",
                     success: true,
-                    organisationId: organisationId,
+                    organisationId,
                     timestamp: new Date(),
                 });
             }
@@ -100,26 +100,30 @@ export async function POST(
 
         // Add teams
         if (teamIds && Array.isArray(teamIds)) {
-            // TODO: Verify teams exist when Team model is created
+            const { Team } = await import("@/models/Team");
+            const teams = await Team.find({ _id: { $in: teamIds }, organisationId });
+            if (teams.length !== teamIds.length) {
+                return NextResponse.json({ error: "Some teams not found in this organization" }, { status: 400 });
+            }
+
             const newTeams = teamIds.filter((teamId: string) =>
-                !project.assignedTeams.includes(teamId as any)
+                !project.assignedTeams.map(String).includes(teamId)
             );
 
             if (newTeams.length > 0) {
-                project.assignedTeams.push(...newTeams);
+                project.assignedTeams.push(...(newTeams as any));
                 await project.save();
 
-                // Log the action
                 await AuditLog.create({
                     userId: session.user.id,
                     action: "add_teams",
                     module: "projects",
                     entityId: project._id,
-                    details: `Added ${newTeams.length} teams to project`,
+                    details: { addedTeamIds: newTeams },
                     ipAddress: request.headers.get("x-forwarded-for") || "localhost",
                     userAgent: request.headers.get("user-agent") || "",
                     success: true,
-                    organisationId: organisationId,
+                    organisationId,
                     timestamp: new Date(),
                 });
             }

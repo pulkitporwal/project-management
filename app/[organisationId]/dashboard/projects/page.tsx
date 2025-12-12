@@ -17,6 +17,8 @@ import {
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { toast } from '@/components/ui/sonner';
+import { useSession } from 'next-auth/react';
+import { canManageProjects } from '@/lib/roles';
 import { SimpleProjectForm } from '@/components/forms/simple-project-form';
 import Link from 'next/link';
 
@@ -26,6 +28,7 @@ export default function Projects() {
     const [projects, setProjects] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateProjectDialogOpen, setIsCreateProjectDialogOpen] = useState(false);
+    const { data: session } = useSession();
 
     useEffect(() => {
         const fetchProjects = async () => {
@@ -123,23 +126,25 @@ export default function Projects() {
                                     <Filter className="h-4 w-4" />
                                     Filter
                                 </Button>
-                                <Dialog open={isCreateProjectDialogOpen} onOpenChange={setIsCreateProjectDialogOpen}>
+                                {canManageProjects(session) && (
+                                  <Dialog open={isCreateProjectDialogOpen} onOpenChange={setIsCreateProjectDialogOpen}>
                                     <DialogTrigger asChild>
-                                        <Button className="gap-2">
-                                            <Plus className="h-4 w-4" />
-                                            New Project
-                                        </Button>
+                                      <Button className="gap-2">
+                                        <Plus className="h-4 w-4" />
+                                        New Project
+                                      </Button>
                                     </DialogTrigger>
                                     <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                                        <DialogHeader>
-                                            <DialogTitle>Create New Project</DialogTitle>
-                                        </DialogHeader>
-                                        <SimpleProjectForm
-                                            onSubmit={handleCreateProject}
-                                            onCancel={() => setIsCreateProjectDialogOpen(false)}
-                                        />
+                                      <DialogHeader>
+                                        <DialogTitle>Create New Project</DialogTitle>
+                                      </DialogHeader>
+                                      <SimpleProjectForm
+                                        onSubmit={handleCreateProject}
+                                        onCancel={() => setIsCreateProjectDialogOpen(false)}
+                                      />
                                     </DialogContent>
-                                </Dialog>
+                                  </Dialog>
+                                )}
                             </div>
                         </div>
                     </motion.div>

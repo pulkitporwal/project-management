@@ -32,17 +32,19 @@ export async function POST(
     return NextResponse.json({ error: "Team not found" }, { status: 404 });
   }
 
-  // Validate members exist in the organization
-  const memberUsers = await User.find({ _id: { $in: memberIds }, organisationId });
+  const memberUsers = await User.find({
+    _id: { $in: memberIds },
+    associatedWith: { $elemMatch: { organisationId, isActive: true } }
+  });
   if (memberUsers.length !== memberIds.length) {
-    return NextResponse.json({ error: "Some members not found in this organization" }, { status: 400 });
+    return NextResponse.json({ error: "Some members are not part of this organization" }, { status: 400 });
   }
 
   // Update team members
   if (action === 'add') {
     // Add new members (avoid duplicates)
-    const newMembers = memberIds.filter(id => !team.members.includes(id));
-    team.members.push(...newMembers);
+    const newMembers = memberIds.filter(id => !team.members.map(String).includes(id));
+    team.members.push(...(newMembers as any));
   } else if (action === 'remove') {
     // Remove members
     team.members = team.members.filter((memberId: any) => !memberIds.includes(memberId));

@@ -27,6 +27,8 @@ export interface ITask extends Document {
   };
   parentTaskId?: mongoose.Types.ObjectId;
   sprintId?: mongoose.Types.ObjectId;
+  storyPoints?: number;
+  type?: 'story' | 'bug' | 'task';
   completionPercentage: number;
   actualStartDate?: Date;
   actualEndDate?: Date;
@@ -143,6 +145,16 @@ const taskSchema = new Schema<ITask>({
   sprintId: {
     type: Schema.Types.ObjectId,
     ref: 'Sprint'
+  },
+  storyPoints: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  type: {
+    type: String,
+    enum: ['story', 'bug', 'task'],
+    default: 'task'
   },
   completionPercentage: {
     type: Number,

@@ -1,6 +1,6 @@
 import React from 'react'
-import { Html } from '@react-email/components'
-import { Button } from '@react-email/button'
+// import { Html } from '@react-email/components'
+import { parseInviteLink } from '@/lib/invitations'
 
 interface InviteEmailProps {
   inviterName: string
@@ -26,8 +26,12 @@ export default function InviteEmail({
   isNewUser = false,
   organisationName
 }: InviteEmailProps) {
+  const parsed = parseInviteLink(inviteLink)
+  const origin = (() => { try { return new URL(inviteLink).origin } catch { return '' } })()
+  const signupLink = parsed && origin ? `${origin}/auth/signup?token=${parsed.token}&email=${encodeURIComponent(parsed.email)}&org=${parsed.organisationId}` : inviteLink
+  const signinLink = parsed && origin ? `${origin}/auth/signin?token=${parsed.token}&email=${encodeURIComponent(parsed.email)}&org=${parsed.organisationId}` : inviteLink
   return (
-    <Html>
+    <html>
       <head>
         <style>
           {`
@@ -75,6 +79,21 @@ export default function InviteEmail({
             }
             .btn-primary:hover {
               background-color: #1d4ed8;
+            }
+            .btn-secondary {
+              background-color: #f3f4f6;
+              color: #1f2937;
+              padding: 12px 24px;
+              text-decoration: none;
+              border-radius: 8px;
+              display: inline-block;
+              font-weight: 600;
+              font-size: 14px;
+              margin-top: 8px;
+              border: 1px solid #e5e7eb;
+            }
+            .btn-secondary:hover {
+              background-color: #e5e7eb;
             }
             .footer {
               background-color: #f8fafc;
@@ -187,25 +206,34 @@ export default function InviteEmail({
               </div>
             )}
 
-            {/* Call to Action */}
             <div style={{ textAlign: 'center', margin: '32px 0' }}>
               {isNewUser ? (
                 <div>
                   <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}>
                     📝 Since you're new to our platform, you'll need to create an account first
                   </p>
-                  <a href={inviteLink} className="btn-primary">
+                  <a href={signupLink} className="btn-primary">
                     🚀 Create Account & Accept Invitation
                   </a>
+                  <div style={{ marginTop: '12px' }}>
+                    <a href={inviteLink} className="btn-secondary">
+                      View Invitation Details
+                    </a>
+                  </div>
                 </div>
               ) : (
                 <div>
                   <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '16px' }}>
-                    👋 Welcome back! Click below to accept the invitation
+                    👋 Welcome back! Choose how to proceed
                   </p>
                   <a href={inviteLink} className="btn-primary">
                     ✅ Accept Invitation
                   </a>
+                  <div style={{ marginTop: '12px' }}>
+                    <a href={signinLink} className="btn-secondary">
+                      Sign In to Accept
+                    </a>
+                  </div>
                 </div>
               )}
               <div className="expiry-notice">
@@ -243,6 +271,6 @@ export default function InviteEmail({
           </div>
         </div>
       </body>
-    </Html>
+    </html>
   )
 }

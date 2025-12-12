@@ -15,21 +15,34 @@ interface SimpleProjectFormProps {
   onSubmit: (values: any) => Promise<void>
   onCancel?: () => void
   isLoading?: boolean
+  initialValues?: Partial<{
+    title: string
+    description: string
+    status: string
+    priority: string
+    startDate: string
+    endDate: string
+    visibility: string
+    budget: string | number
+    client: string
+    tags: string[]
+  }>
+  mode?: 'create' | 'edit'
 }
 
-export function SimpleProjectForm({ onSubmit, onCancel, isLoading }: SimpleProjectFormProps) {
+export function SimpleProjectForm({ onSubmit, onCancel, isLoading, initialValues, mode = 'create' }: SimpleProjectFormProps) {
   const [formData, setFormData] = useState({
-    title: "",
-    description: "",
-    status: "planning",
-    priority: "medium",
-    startDate: "",
-    endDate: "",
-    visibility: "team-only",
-    budget: "",
-    client: "",
+    title: initialValues?.title || "",
+    description: initialValues?.description || "",
+    status: initialValues?.status || "planning",
+    priority: initialValues?.priority || "medium",
+    startDate: initialValues?.startDate || "",
+    endDate: initialValues?.endDate || "",
+    visibility: initialValues?.visibility || "team-only",
+    budget: (initialValues?.budget as any) || "",
+    client: initialValues?.client || "",
   })
-  const [tags, setTags] = useState<string[]>([])
+  const [tags, setTags] = useState<string[]>(initialValues?.tags || [])
   const [newTag, setNewTag] = useState("")
 
   const handleInputChange = (field: string, value: string) => {
@@ -57,29 +70,31 @@ export function SimpleProjectForm({ onSubmit, onCancel, isLoading }: SimpleProje
 
     try {
       await onSubmit({ ...formData, tags })
-      toast.success("Project created successfully")
-      setFormData({
-        title: "",
-        description: "",
-        status: "planning",
-        priority: "medium",
-        startDate: "",
-        endDate: "",
-        visibility: "team-only",
-        budget: "",
-        client: "",
-      })
-      setTags([])
+      toast.success(mode === 'edit' ? "Project updated successfully" : "Project created successfully")
+      if (mode === 'create') {
+        setFormData({
+          title: "",
+          description: "",
+          status: "planning",
+          priority: "medium",
+          startDate: "",
+          endDate: "",
+          visibility: "team-only",
+          budget: "",
+          client: "",
+        })
+        setTags([])
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create project")
+      toast.error(error instanceof Error ? error.message : (mode === 'edit' ? "Failed to update project" : "Failed to create project"))
     }
   }
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Create Project</CardTitle>
-        <CardDescription>Fill in the project details below</CardDescription>
+        <CardTitle>{mode === 'edit' ? 'Edit Project' : 'Create Project'}</CardTitle>
+        <CardDescription>{mode === 'edit' ? 'Update the project details below' : 'Fill in the project details below'}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -241,7 +256,7 @@ export function SimpleProjectForm({ onSubmit, onCancel, isLoading }: SimpleProje
               </Button>
             )}
             <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Project"}
+              {isLoading ? (mode === 'edit' ? 'Updating...' : 'Creating...') : (mode === 'edit' ? 'Update Project' : 'Create Project')}
             </Button>
           </div>
         </form>
