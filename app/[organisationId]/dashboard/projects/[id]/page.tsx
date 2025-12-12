@@ -210,7 +210,7 @@ export default function ProjectDetailPage() {
                     </TabsContent>
 
                     <TabsContent value="team" className="space-y-6">
-                        <ProjectTeam projectId={projectId} organisationId={organisationId} />
+                        <ProjectTeam projectId={projectId} />
                     </TabsContent>
 
                     <TabsContent value="tasks" className="space-y-6">

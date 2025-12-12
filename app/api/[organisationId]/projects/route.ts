@@ -4,6 +4,7 @@ import { Project } from "@/models/Project";
 import { Kanban } from "@/models/Kanban";
 import { allowRoles } from "@/lib/roleGuardServer";
 import { AuditLog } from "@/models/AuditLog";
+import { User } from "@/models/User";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ organisationId: string }> }) {
   await connectDB();
@@ -31,13 +32,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ organisationId: string }> }) {
   await connectDB();
   const { organisationId } = await params;
-  const { ok, session, res } = await allowRoles(["admin", "manager"]);
+  const { ok, session, res } = await allowRoles(["admin", "manager", "employee"]);
   if (!ok) return res;
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  
+  const user = await User.findById(session.user.id);
+  if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  
+  const association = user.associatedWith?.find(
+    (assoc: any) => assoc.organisationId.toString() === organisationId && assoc.isActive && !assoc.banned
+  );
+  if (!association) {
+    return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 });
+  }
+
   const body = await request.json();
+
   const doc = new Project({
-    ...body, createdBy: session.user.id,
+    ...body,
+    createdBy: session.user.id,
     organisationId: organisationId,
+    members: [session.user.id]
   });
   await doc.save();
 

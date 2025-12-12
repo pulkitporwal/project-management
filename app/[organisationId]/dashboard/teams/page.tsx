@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { 
-  Search, 
-  Plus, 
-  Filter, 
-  Users, 
+import {
+  Search,
+  Plus,
+  Filter,
+  Users,
   MoreHorizontal,
   Edit,
   Trash2,
@@ -20,6 +20,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useParams } from 'next/navigation'
 
 interface Team {
   _id: string
@@ -47,11 +48,12 @@ export default function Teams() {
   const [selectedStatus, setSelectedStatus] = useState("all")
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [availableUsers, setAvailableUsers] = useState<TeamMember[]>([])
+  const { organisationId } = useParams()
 
   useEffect(() => {
     const fetchTeams = async () => {
       try {
-        const response = await fetch('/api/teams')
+        const response = await fetch(`/api/${organisationId}/teams`)
         if (!response.ok) {
           throw new Error('Failed to fetch teams')
         }
@@ -66,7 +68,7 @@ export default function Teams() {
 
     const fetchUsers = async () => {
       try {
-        const response = await fetch('/api/users')
+        const response = await fetch(`/api/${organisationId}/users`)
         if (response.ok) {
           const data = await response.json()
           setAvailableUsers(data)
@@ -82,10 +84,10 @@ export default function Teams() {
 
   const filteredTeams = teams.filter(team => {
     const matchesSearch = team.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         team.description.toLowerCase().includes(searchQuery.toLowerCase())
-    
+      team.description.toLowerCase().includes(searchQuery.toLowerCase())
+
     const matchesStatus = selectedStatus === "all" || team.status === selectedStatus
-    
+
     return matchesSearch && matchesStatus
   })
 
@@ -156,7 +158,7 @@ export default function Teams() {
           <h1 className="text-2xl font-bold">Teams</h1>
           <p className="text-gray-600">Manage your project teams and collaborations</p>
         </div>
-        <CreateTeamDialog 
+        <CreateTeamDialog
           onTeamCreated={handleCreateTeam}
           availableUsers={availableUsers}
           trigger={
@@ -216,9 +218,9 @@ export default function Teams() {
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
                     <Edit className="h-3 w-3" />
                   </Button>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="h-6 w-6 p-0"
                     onClick={() => handleDeleteTeam(team._id)}
                   >
@@ -266,7 +268,7 @@ export default function Teams() {
                         </div>
                       ) : null
                     })()}
-                    
+
                     {/* Other Members */}
                     {team.members
                       .filter(m => m._id !== team.leadId)
@@ -285,7 +287,7 @@ export default function Teams() {
                           </div>
                         </div>
                       ))}
-                    
+
                     {team.members.length > 4 && (
                       <div className="text-center text-xs text-gray-500 pt-1">
                         +{team.members.length - 4} more members
@@ -319,7 +321,7 @@ export default function Teams() {
               <p className="text-gray-600 mb-4">
                 {searchQuery ? 'Try adjusting your search or filters' : 'Create your first team to get started'}
               </p>
-              <CreateTeamDialog 
+              <CreateTeamDialog
                 onTeamCreated={handleCreateTeam}
                 availableUsers={availableUsers}
                 trigger={
@@ -387,7 +389,7 @@ function CreateTeamDialog({ onTeamCreated, availableUsers, trigger }: CreateTeam
         <DialogHeader>
           <DialogTitle>Create New Team</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name">Team Name *</Label>

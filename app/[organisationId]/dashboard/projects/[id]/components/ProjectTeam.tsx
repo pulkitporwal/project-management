@@ -5,12 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input"
-import { 
-  Users, 
-  Search, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import {
+  Users,
+  Search,
+  Mail,
+  Phone,
+  MapPin,
   Calendar,
   Briefcase,
   UserPlus,
@@ -28,10 +28,10 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useParams } from 'next/navigation'
 
 interface ProjectTeamProps {
   projectId: string
-  organisationId: string
 }
 
 interface TeamMember {
@@ -60,7 +60,7 @@ interface Team {
   leadId: string
 }
 
-export default function ProjectTeam({ projectId, organisationId }: ProjectTeamProps) {
+export default function ProjectTeam({ projectId }: ProjectTeamProps) {
   const [members, setMembers] = useState<TeamMember[]>([])
   const [teams, setTeams] = useState<Team[]>([])
   const [loading, setLoading] = useState(true)
@@ -75,6 +75,8 @@ export default function ProjectTeam({ projectId, organisationId }: ProjectTeamPr
     leadId: '',
     members: [] as string[]
   })
+  const params = useParams()
+  const { organisationId } = params
 
   useEffect(() => {
     const fetchTeamData = async () => {
@@ -85,14 +87,14 @@ export default function ProjectTeam({ projectId, organisationId }: ProjectTeamPr
           throw new Error('Failed to fetch members')
         }
         const membersData = await membersResponse.json()
-        
+
         // Fetch organization teams
         const teamsResponse = await fetch(`/api/${organisationId}/teams?includeMembers=true`)
         if (!teamsResponse.ok) {
           throw new Error('Failed to fetch teams')
         }
         const teamsData = await teamsResponse.json()
-        
+
         // Transform members data to match our interface
         const transformedMembers: TeamMember[] = membersData.members.map((member: any) => ({
           id: member._id,
@@ -136,7 +138,7 @@ export default function ProjectTeam({ projectId, organisationId }: ProjectTeamPr
           })) : [],
           leadId: team.leadId
         }))
-        
+
         setMembers(transformedMembers)
         setTeams(transformedTeams)
       } catch (error) {
@@ -195,7 +197,7 @@ export default function ProjectTeam({ projectId, organisationId }: ProjectTeamPr
       const newTeam = await response.json()
       setTeams(prev => [...prev, newTeam])
       setIsCreateTeamDialogOpen(false)
-      
+
       // Reset form
       setTeamFormData({
         name: '',
@@ -228,7 +230,7 @@ export default function ProjectTeam({ projectId, organisationId }: ProjectTeamPr
       setTeams(prev => prev.map(team => team.id === selectedTeam.id ? updatedTeam : team))
       setIsEditTeamDialogOpen(false)
       setSelectedTeam(null)
-      
+
       // Reset form
       setTeamFormData({
         name: '',
@@ -531,17 +533,17 @@ export default function ProjectTeam({ projectId, organisationId }: ProjectTeamPr
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">{team.members.length} members</Badge>
                     <div className="flex gap-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="h-6 w-6 p-0"
                         onClick={() => handleEditTeam(team)}
                       >
                         <Edit className="h-3 w-3" />
                       </Button>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
+                      <Button
+                        variant="ghost"
+                        size="sm"
                         className="h-6 w-6 p-0"
                         onClick={() => handleDeleteTeam(team.id)}
                       >
