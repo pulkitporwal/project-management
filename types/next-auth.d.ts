@@ -8,6 +8,12 @@ declare module "next-auth" {
       role: "admin" | "manager" | "employee";
       department: string;
       jobTitle: string;
+      currentOrganization?: string;
+      organizations?: Array<{
+        id: string;
+        name: string;
+        role: "admin" | "manager" | "employee";
+      }>;
     } & DefaultSession["user"];
   }
 
@@ -16,6 +22,12 @@ declare module "next-auth" {
     role: "admin" | "manager" | "employee";
     department: string;
     jobTitle: string;
+    currentOrganization?: string;
+    organizations?: Array<{
+      id: string;
+      name: string;
+      role: "admin" | "manager" | "employee";
+    }>;
   }
 }
 
@@ -25,5 +37,11 @@ declare module "next-auth/jwt" {
     role: "admin" | "manager" | "employee";
     department: string;
     jobTitle: string;
+    currentOrganization?: string;
+    organizations?: Array<{
+      id: string;
+      name: string;
+      role: "admin" | "manager" | "employee";
+    }>;
   }
 }

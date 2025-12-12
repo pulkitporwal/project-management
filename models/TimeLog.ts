@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ITimeLog extends Document {
   taskId: mongoose.Types.ObjectId;
   userId: mongoose.Types.ObjectId;
+  organisationId: mongoose.Types.ObjectId;
   hours: number;
   date: Date;
   notes?: string;
@@ -23,6 +24,11 @@ const timeLogSchema = new Schema<ITimeLog>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
+    required: true
+  },
+  organisationId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
     required: true
   },
   hours: {
@@ -118,4 +124,4 @@ timeLogSchema.pre('save', async function(next) {
   
 });
 
-export const TimeLog = mongoose.model<ITimeLog>('TimeLog', timeLogSchema);
+export const TimeLog = mongoose.models.TimeLog || mongoose.model<ITimeLog>('TimeLog', timeLogSchema);

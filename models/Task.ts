@@ -3,12 +3,13 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface ITask extends Document {
   title: string;
   description?: string;
-  status: 'todo' | 'in-progress' | 'in-review' | 'completed' | 'cancelled' | 'blocked';
+  status: 'backlog' | 'todo' | 'in-progress' | 'in-review' | 'done' | 'cancelled';
   priority: 'low' | 'medium' | 'high' | 'urgent';
   dueDate?: Date;
   startDate?: Date;
   labels: string[];
   projectId: mongoose.Types.ObjectId;
+  organisationId: mongoose.Types.ObjectId;
   assignedTo?: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
   dependencies: mongoose.Types.ObjectId[];
@@ -45,7 +46,7 @@ const taskSchema = new Schema<ITask>({
   },
   status: {
     type: String,
-    enum: ['todo', 'in-progress', 'in-review', 'completed', 'cancelled', 'blocked'],
+    enum: ['backlog', 'todo', 'in-progress', 'in-review', 'done', 'cancelled'],
     default: 'todo',
     required: true
   },
@@ -69,6 +70,11 @@ const taskSchema = new Schema<ITask>({
   projectId: {
     type: Schema.Types.ObjectId,
     ref: 'Project',
+    required: true
+  },
+  organisationId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
     required: true
   },
   assignedTo: {
@@ -160,6 +166,7 @@ const taskSchema = new Schema<ITask>({
 taskSchema.index({ status: 1 });
 taskSchema.index({ priority: 1 });
 taskSchema.index({ projectId: 1 });
+taskSchema.index({ organisationId: 1 });
 taskSchema.index({ assignedTo: 1 });
 taskSchema.index({ createdBy: 1 });
 taskSchema.index({ dueDate: 1 });
@@ -175,7 +182,7 @@ taskSchema.index({ projectId: 1, assignedTo: 1 });
 
 // Virtuals
 taskSchema.virtual('isOverdue').get(function () {
-  if (!this.dueDate || this.status === 'completed') return false;
+  if (!this.dueDate || this.status === 'done') return false;
   return new Date() > this.dueDate;
 });
 
@@ -203,7 +210,7 @@ taskSchema.pre('save', function (next) {
     if (this.status === 'in-progress' && !this.actualStartDate) {
       this.actualStartDate = new Date();
     }
-    if (this.status === 'completed' && !this.actualEndDate) {
+    if (this.status === 'done' && !this.actualEndDate) {
       this.actualEndDate = new Date();
       this.completionPercentage = 100;
     }
@@ -215,4 +222,4 @@ taskSchema.pre('save', function (next) {
   }
 });
 
-export const Task = mongoose.model<ITask>('Task', taskSchema);
+export const Task = mongoose.models.Task || mongoose.model<ITask>('Task', taskSchema);

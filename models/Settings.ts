@@ -424,4 +424,4 @@ settingsSchema.statics.createDefaultForTeam = function (teamId: mongoose.Types.O
   return this.create({ teamId });
 };
 
-export const Settings = mongoose.model<ISettings>('Settings', settingsSchema);
+export const Settings = mongoose.models.Settings || mongoose.model<ISettings>('Settings', settingsSchema);

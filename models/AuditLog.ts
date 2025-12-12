@@ -210,4 +210,4 @@ auditLogSchema.statics.cleanupOldLogs = function() {
   });
 };
 
-export const AuditLog = mongoose.model<IAuditLog>('AuditLog', auditLogSchema);
+export const AuditLog = mongoose.models.AuditLog || mongoose.model<IAuditLog>('AuditLog', auditLogSchema);

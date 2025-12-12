@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
-export default function SigninPage() {
+function SigninInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get('token');
+  const inviteEmail = searchParams.get('email');
+  const inviteOrg = searchParams.get('org');
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -51,10 +55,44 @@ export default function SigninPage() {
       });
 
       if (result?.error) {
+        try {
+          const checkRes = await fetch(`/api/users/check?email=${encodeURIComponent(formData.email)}`)
+          const checkJson = await checkRes.json()
+          if (checkRes.ok && checkJson.user && checkJson.user.emailVerified === false) {
+            router.push(`/auth/verify?email=${encodeURIComponent(formData.email)}&next=${encodeURIComponent('/select-organisations')}&auto=1`)
+            return;
+          }
+        } catch (_) {}
         setError("Invalid email or password");
       } else {
-        // Successful sign in
-        router.push("/dashboard");
+        // If invitation details present, accept automatically
+        if (inviteToken && inviteEmail && inviteOrg) {
+          try {
+            const checkRes = await fetch(`/api/${inviteOrg}/invitations/accept?token=${inviteToken}&email=${inviteEmail}`);
+            const checkJson = await checkRes.json();
+            if (checkRes.ok && checkJson.currentUser?.id) {
+              const acceptRes = await fetch(`/api/${inviteOrg}/invitations/accept`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  token: inviteToken,
+                  email: inviteEmail,
+                  userId: checkJson.currentUser.id,
+                  isNewUser: false
+                })
+              });
+              const acceptJson = await acceptRes.json();
+              if (acceptRes.ok) {
+                router.push(`/${inviteOrg}/dashboard`);
+                router.refresh();
+                return;
+              }
+            }
+          } catch (err) {
+            // Fall through to default redirect
+          }
+        }
+        router.push("/select-organisations");
         router.refresh();
       }
     } catch (error) {
@@ -150,5 +188,13 @@ export default function SigninPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function SigninPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading…</div>}>
+      <SigninInner />
+    </Suspense>
   );
 }

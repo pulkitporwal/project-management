@@ -108,4 +108,4 @@ milestoneSchema.pre('save', function(next) {
   
 });
 
-export const Milestone = mongoose.model<IMilestone>('Milestone', milestoneSchema);
+export const Milestone = mongoose.models.Milestone || mongoose.model<IMilestone>('Milestone', milestoneSchema);

@@ -107,4 +107,4 @@ skillSchema.pre('save', function(next) {
   
 });
 
-export const Skill = mongoose.model<ISkill>('Skill', skillSchema);
+export const Skill = mongoose.models.Skill || mongoose.model<ISkill>('Skill', skillSchema);

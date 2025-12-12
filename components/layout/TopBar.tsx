@@ -14,10 +14,17 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/components/ui/sonner';
 import { apiGet } from '@/lib/api';
+import { OrganizationSwitcher } from '@/components/organization/organization-switcher';
+import { useRouter } from 'next/navigation';
 
 export function TopBar() {
+  const router = useRouter();
   const [searchOpen, setSearchOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
+
+  const handleOrganizationChange = (orgId: string) => {
+    router.push(`/${orgId}/dashboard`);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -35,6 +42,11 @@ export function TopBar() {
 
   return (
     <header className="h-16 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-6">
+      {/* Organization Switcher */}
+      <div className="flex items-center gap-4">
+        <OrganizationSwitcher onOrganizationChange={handleOrganizationChange} />
+      </div>
+
       {/* Search */}
       <div className="flex items-center gap-4 flex-1 max-w-xl">
         <div className="relative flex-1">

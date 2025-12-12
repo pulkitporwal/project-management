@@ -6,6 +6,7 @@ export interface IProject extends Document {
     status: 'planning' | 'active' | 'on-hold' | 'completed' | 'cancelled';
     priority: 'low' | 'medium' | 'high' | 'critical';
     createdBy: mongoose.Types.ObjectId;
+    organisationId: mongoose.Types.ObjectId;
     assignedTeams: mongoose.Types.ObjectId[];
     members: mongoose.Types.ObjectId[];
     milestones: mongoose.Types.ObjectId[];
@@ -47,6 +48,11 @@ const projectSchema = new Schema<IProject>({
     createdBy: {
         type: Schema.Types.ObjectId,
         ref: 'User',
+        required: true
+    },
+    organisationId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Organization',
         required: true
     },
     assignedTeams: [{
@@ -112,6 +118,7 @@ projectSchema.index({ title: 1 });
 projectSchema.index({ status: 1 });
 projectSchema.index({ priority: 1 });
 projectSchema.index({ createdBy: 1 });
+projectSchema.index({ organisationId: 1 });
 projectSchema.index({ assignedTeams: 1 });
 projectSchema.index({ members: 1 });
 projectSchema.index({ startDate: 1 });
@@ -157,4 +164,4 @@ projectSchema.pre('save', function (next) {
   }
 });
 
-export const Project = mongoose.model<IProject>('Project', projectSchema);
+export const Project = mongoose.models.Project || mongoose.model<IProject>('Project', projectSchema);

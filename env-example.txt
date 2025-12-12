@@ -1,0 +1,26 @@
+# Email Configuration (Gmail)
+GMAIL_USER=your-email@gmail.com
+GMAIL_APP_PASSWORD=your-app-password
+
+# Application Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Database Configuration
+MONGODB_URI=mongodb://localhost:27017/project-management
+
+# Authentication (if using JWT or similar)
+JWT_SECRET=your-jwt-secret
+NEXTAUTH_SECRET=your-nextauth-secret
+NEXTAUTH_URL=http://localhost:3000
+
+# Email Setup Instructions:
+# 1. Enable 2-factor authentication on your Gmail account
+# 2. Go to Google Account settings -> Security -> App passwords
+# 3. Generate a new app password for "Project Management"
+# 4. Use the app password in GMAIL_APP_PASSWORD
+# 5. Use your Gmail address in GMAIL_USER
+
+# For production, consider using:
+# - Transactional email services (SendGrid, Mailgun, AWS SES)
+# - Environment-specific configurations
+# - Email template management systems

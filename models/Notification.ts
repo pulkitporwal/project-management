@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface INotification extends Document {
   userId: mongoose.Types.ObjectId;
-  type: 'task_assigned' | 'task_completed' | 'comment_added' | 'mention' | 'project_updated' | 'deadline_reminder' | 'performance_review' | 'okr_update' | 'team_invite' | 'system';
+  type: 'task_assigned' | 'task_completed' | 'comment_added' | 'mention' | 'project_updated' | 'deadline_reminder' | 'performance_review' | 'okr_update' | 'system';
   title: string;
   message: string;
   metadata: {
@@ -30,7 +30,7 @@ const notificationSchema = new Schema<INotification>({
   },
   type: {
     type: String,
-    enum: ['task_assigned', 'task_completed', 'comment_added', 'mention', 'project_updated', 'deadline_reminder', 'performance_review', 'okr_update', 'team_invite', 'system'],
+    enum: ['task_assigned', 'task_completed', 'comment_added', 'mention', 'project_updated', 'deadline_reminder', 'performance_review', 'okr_update', 'system'],
     required: true
   },
   title: {
@@ -153,4 +153,4 @@ notificationSchema.statics.cleanupExpired = function() {
   });
 };
 
-export const Notification = mongoose.model<INotification>('Notification', notificationSchema);
+export const Notification = mongoose.models.Notification || mongoose.model<INotification>('Notification', notificationSchema);

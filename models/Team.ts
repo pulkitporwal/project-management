@@ -5,6 +5,7 @@ export interface ITeam extends Document {
   description?: string;
   members: mongoose.Types.ObjectId[];
   createdBy: mongoose.Types.ObjectId;
+  organisationId: mongoose.Types.ObjectId;
   settings: {
     allowSelfAssign: boolean;
     requireApprovalForTasks: boolean;
@@ -15,6 +16,7 @@ export interface ITeam extends Document {
     timezone: string;
   };
   departments: string[];
+  archived: boolean;
 }
 
 const teamSchema = new Schema<ITeam>({
@@ -36,6 +38,11 @@ const teamSchema = new Schema<ITeam>({
   createdBy: {
     type: Schema.Types.ObjectId,
     ref: 'User',
+    required: true
+  },
+  organisationId: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
     required: true
   },
   settings: {
@@ -66,7 +73,11 @@ const teamSchema = new Schema<ITeam>({
     type: String,
     trim: true,
     maxlength: [50, 'Department name cannot exceed 50 characters']
-  }]
+  }],
+  archived: {
+    type: Boolean,
+    default: false
+  }
 }, {
   timestamps: true,
   toJSON: { virtuals: true },
@@ -76,7 +87,9 @@ const teamSchema = new Schema<ITeam>({
 // Indexes
 teamSchema.index({ name: 1 });
 teamSchema.index({ createdBy: 1 });
+teamSchema.index({ organisationId: 1 });
 teamSchema.index({ departments: 1 });
+teamSchema.index({ archived: 1 });
 
 // Virtuals
 teamSchema.virtual('memberCount', {
@@ -91,7 +104,7 @@ teamSchema.virtual('activeProjects', {
   localField: '_id',
   foreignField: 'assignedTeams',
   count: true,
-  match: { status: 'active' }
+  match: { status: 'active', archived: false }
 });
 
 // Pre-remove middleware to clean up references
@@ -103,4 +116,4 @@ teamSchema.pre('deleteOne', { document: true, query: false }, async function() {
   );
 });
 
-export const Team = mongoose.model<ITeam>('Team', teamSchema);
+export const Team = mongoose.models.Team || mongoose.model<ITeam>('Team', teamSchema);

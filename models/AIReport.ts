@@ -248,4 +248,4 @@ aiReportSchema.statics.cleanupExpired = function () {
     });
 };
 
-export const AIReport = mongoose.model<IAIReport>('AIReport', aiReportSchema);
+export const AIReport = mongoose.models.AIReport || mongoose.model<IAIReport>('AIReport', aiReportSchema);

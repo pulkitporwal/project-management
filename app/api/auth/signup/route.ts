@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const newUser = new User({
       name,
       email,
-      passwordHash,
+      password: passwordHash,
       jobTitle,
       department,
       role,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     };
 
     return NextResponse.json(
-      { 
+      {
         message: "User created successfully",
         user: userResponse
       },

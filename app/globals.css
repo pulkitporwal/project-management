@@ -120,3 +120,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+  .kanban-column {
+    @apply bg-muted/30 rounded-lg border border-border/50 min-h-[500px] p-3 space-y-2;
+  }
+  
+  .kanban-column:hover {
+    @apply border-border;
+  }
+  
+  .kanban-card {
+    @apply bg-background border border-border/50 rounded-lg p-3 shadow-sm cursor-pointer transition-all duration-200 hover:shadow-md hover:border-border;
+  }
+  
+  .kanban-card:hover {
+    @apply scale-[1.01] bg-card;
+  }
+}

@@ -224,4 +224,4 @@ feedbackSchema.statics.findPendingFeedback = function (userId: mongoose.Types.Ob
   }).populate('giver', 'name email profileImage');
 };
 
-export const Feedback = mongoose.model<IFeedback>('Feedback', feedbackSchema);
+export const Feedback = mongoose.models.Feedback || mongoose.model<IFeedback>('Feedback', feedbackSchema);

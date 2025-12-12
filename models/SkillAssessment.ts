@@ -206,4 +206,4 @@ skillAssessmentSchema.statics.findOverdue = function() {
   }).populate('user skill');
 };
 
-export const SkillAssessment = mongoose.model<ISkillAssessment>('SkillAssessment', skillAssessmentSchema);
+export const SkillAssessment = mongoose.models.SkillAssessment || mongoose.model<ISkillAssessment>('SkillAssessment', skillAssessmentSchema);

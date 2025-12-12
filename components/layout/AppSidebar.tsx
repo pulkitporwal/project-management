@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Sparkles,
   Building2,
+  User2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,29 +26,34 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { NavItem } from "../ui/nav-item";
 
-const navigationItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Projects", href: "/dashboard/projects", icon: FolderKanban },
-  { name: "Tasks", href: "/dashboard/tasks", icon: ListTodo, badge: 5 },
-  { name: "Kanban Board", href: "/dashboard/kanban", icon: LayoutDashboard },
-  { name: "Calendar", href: "/dashboard/calendar", icon: Calendar },
-  { name: "Team", href: "/dashboard/team", icon: Users },
-  { name: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
-];
+interface AppSidebarProps {
+  organisationId: string;
+}
 
-const performanceItems = [
-  { name: "OKRs", href: "/dashboard/okrs", icon: Target },
-  { name: "Reviews", href: "/dashboard/reviews", icon: MessageSquare },
-  { name: "AI Insights", href: "/dashboard/ai-insights", icon: Sparkles },
-];
-
-const adminItems = [
-  { name: "Organization", href: "/dashboard/organization", icon: Building2 },
-  { name: "Settings", href: "/dashboard/settings", icon: Settings },
-];
-
-export function AppSidebar() {
+export function AppSidebar({ organisationId }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+
+  const navigationItems = [
+    { name: "Dashboard", href: `/${organisationId}/dashboard`, icon: LayoutDashboard },
+    { name: "Projects", href: `/${organisationId}/dashboard/projects`, icon: FolderKanban },
+    // { name: "Tasks", href: `/${organisationId}/dashboard/tasks`, icon: ListTodo, badge: 5 },
+    // { name: "Kanban Board", href: `/${organisationId}/dashboard/kanban`, icon: LayoutDashboard },
+    { name: "Calendar", href: `/${organisationId}/dashboard/calendar`, icon: Calendar },
+    { name: "Members", href: `/${organisationId}/dashboard/members`, icon: User2 },
+    { name: "Teams", href: `/${organisationId}/dashboard/teams`, icon: Users },
+    { name: "Analytics", href: `/${organisationId}/dashboard/analytics`, icon: BarChart3 },
+  ];
+
+  const performanceItems = [
+    { name: "OKRs", href: `/${organisationId}/dashboard/okrs`, icon: Target },
+    { name: "Reviews", href: `/${organisationId}/dashboard/reviews`, icon: MessageSquare },
+    { name: "AI Insights", href: `/${organisationId}/dashboard/ai-insights`, icon: Sparkles },
+  ];
+
+  const adminItems = [
+    { name: "Organization", href: `/${organisationId}/dashboard/organization`, icon: Building2 },
+    { name: "Settings", href: `/${organisationId}/dashboard/settings`, icon: Settings },
+  ];
 
   return (
     <aside
@@ -109,14 +115,14 @@ export function AppSidebar() {
               {!collapsed && (
                 <>
                   <span className="flex-1">{item.name}</span>
-                  {item.badge && (
+                  {/* {item?.badge && (
                     <Badge
                       variant="secondary"
                       className="h-5 w-5 p-0 justify-center text-xs"
                     >
                       {item.badge}
                     </Badge>
-                  )}
+                  )} */}
                 </>
               )}
             </NavItem>

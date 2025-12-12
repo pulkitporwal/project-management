@@ -253,4 +253,4 @@ okrSchema.pre('save', function (next) {
 
 });
 
-export const OKR = mongoose.model<IOKR>('OKR', okrSchema);
+export const OKR = mongoose.models.OKR || mongoose.model<IOKR>('OKR', okrSchema);

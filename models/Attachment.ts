@@ -159,4 +159,4 @@ attachmentSchema.statics.cleanupExpired = function () {
     });
 };
 
-export const Attachment = mongoose.model<IAttachment>('Attachment', attachmentSchema);
+export const Attachment = mongoose.models.Attachment || mongoose.model<IAttachment>('Attachment', attachmentSchema);

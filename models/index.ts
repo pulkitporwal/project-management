@@ -1,8 +1,10 @@
 // Database Models Index File
 // Project Management + Employee Performance Management SaaS Platform
 
+export { Organization } from './Organization';
+export type { IOrganization } from './Organization';
 export { User } from './User';
-export type { IUser } from './User';
+export type { IUser, IOrganizationAssociation } from './User';
 export { Team } from './Team';
 export type { ITeam } from './Team';
 export { Project } from './Project';
@@ -37,6 +39,7 @@ export { Settings } from './Settings';
 export type { ISettings } from './Settings';
 
 // Import all models to ensure they are registered with Mongoose
+import './Organization';
 import './User';
 import './Team';
 import './Project';

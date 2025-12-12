@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,11 +10,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Eye, EyeOff } from "lucide-react";
 
-export default function SignupPage() {
+function SignupPageInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const inviteToken = searchParams.get('token');
+  const inviteEmail = searchParams.get('email');
+  const inviteOrg = searchParams.get('org');
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    email: inviteEmail || "",
     password: "",
     confirmPassword: "",
     jobTitle: "",
@@ -84,10 +88,36 @@ export default function SignupPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setSuccess("Account created successfully! Redirecting to sign in...");
+        setSuccess("Account created successfully!");
+        // If invitation params present, accept automatically
+        if (inviteToken && inviteEmail && inviteOrg) {
+          try {
+            const acceptRes = await fetch(`/api/${inviteOrg}/invitations/accept`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                token: inviteToken,
+                email: inviteEmail,
+                userId: data.user?.id,
+                isNewUser: true
+              })
+            });
+            const acceptJson = await acceptRes.json();
+            if (!acceptRes.ok) {
+              setError(acceptJson.error || 'Failed to accept invitation');
+              return;
+            }
+            router.push(`/${inviteOrg}/dashboard`);
+            router.refresh();
+            return;
+          } catch (err) {
+            setError('Invitation acceptance failed. Please sign in and try again.');
+          }
+        }
+        // Fallback: go to sign in
         setTimeout(() => {
           router.push("/auth/signin");
-        }, 2000);
+        }, 1500);
       } else {
         setError(data.error || "Failed to create account");
       }
@@ -119,7 +149,7 @@ export default function SignupPage() {
                 {success}
               </div>
             )}
-            
+
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -144,7 +174,7 @@ export default function SignupPage() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                disabled={isLoading}
+                disabled={isLoading || !!inviteEmail}
               />
             </div>
 
@@ -279,5 +309,13 @@ export default function SignupPage() {
         </form>
       </Card>
     </div>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignupPageInner />
+    </Suspense>
   );
 }

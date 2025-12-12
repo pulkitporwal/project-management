@@ -132,4 +132,4 @@ commentSchema.pre('save', function(next) {
   
 });
 
-export const Comment = mongoose.model<IComment>('Comment', commentSchema);
+export const Comment = mongoose.models.Comment || mongoose.model<IComment>('Comment', commentSchema);
