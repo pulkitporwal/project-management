@@ -16,13 +16,16 @@ import {
     MoreHorizontal,
     Edit,
     Trash2,
-    Plus
+    Plus,
+    DollarSign
 } from "lucide-react"
 import ProjectOverview from './components/ProjectOverview'
 import KanbanBoard from './components/KanbanBoard'
 import ProjectAttachments from './components/ProjectAttachments'
 import ProjectTeam from './components/ProjectTeam'
 import ProjectTasks from './components/ProjectTasks'
+import BudgetOverview from '@/components/budget/BudgetOverview'
+import BudgetAnalytics from '@/components/budget/BudgetAnalytics'
 
 export default function ProjectDetailPage() {
     const params = useParams()
@@ -174,7 +177,7 @@ export default function ProjectDetailPage() {
             {/* Main Content */}
             <div className="p-6">
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="grid w-full grid-cols-5 lg:w-auto lg:grid-cols-5">
+                    <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:grid-cols-6">
                         <TabsTrigger value="overview" className="flex items-center gap-2">
                             <Settings className="h-4 w-4" />
                             Overview
@@ -182,6 +185,10 @@ export default function ProjectDetailPage() {
                         <TabsTrigger value="kanban" className="flex items-center gap-2">
                             <CheckSquare className="h-4 w-4" />
                             Kanban
+                        </TabsTrigger>
+                        <TabsTrigger value="budget" className="flex items-center gap-2">
+                            <DollarSign className="h-4 w-4" />
+                            Budget
                         </TabsTrigger>
                         <TabsTrigger value="attachments" className="flex items-center gap-2">
                             <Paperclip className="h-4 w-4" />
@@ -203,6 +210,13 @@ export default function ProjectDetailPage() {
 
                     <TabsContent value="kanban" className="space-y-6">
                         <KanbanBoard projectId={projectId} organisationId={organisationId} />
+                    </TabsContent>
+
+                    <TabsContent value="budget" className="space-y-6">
+                        <div className="space-y-6">
+                            <BudgetOverview projectId={projectId} organisationId={organisationId} />
+                            <BudgetAnalytics projectId={projectId} organisationId={organisationId} />
+                        </div>
                     </TabsContent>
 
                     <TabsContent value="attachments" className="space-y-6">

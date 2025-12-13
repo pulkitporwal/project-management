@@ -3,6 +3,7 @@ import connectDB from "@/lib/db";
 import { allowRoles } from "@/lib/roleGuardServer";
 import { Project } from "@/models/Project";
 import { BudgetTransaction } from "@/models/BudgetTransaction";
+import { Budget } from "@/models/Budget";
 
 export async function GET(
   request: NextRequest,
@@ -17,7 +18,23 @@ export async function GET(
   const project = await Project.findOne({ _id: id, organisationId });
   if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
 
-  const items = await BudgetTransaction.find({ projectId: id, organisationId }).sort({ date: -1 });
+  const url = new URL(request.url)
+  const status = url.searchParams.get('status')
+  const type = url.searchParams.get('type')
+  const category = url.searchParams.get('category')
+  const limit = parseInt(url.searchParams.get('limit') || '50')
+
+  // Build query
+  const query: any = { projectId: id, organisationId }
+  if (status) query.status = status
+  if (type) query.type = type
+  if (category) query.category = category
+
+  const items = await BudgetTransaction.find(query)
+    .populate('createdBy approvedBy', 'name email')
+    .sort({ date: -1 })
+    .limit(limit);
+  
   return NextResponse.json(items);
 }
 
@@ -32,9 +49,59 @@ export async function POST(
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await request.json();
-  const tx = new BudgetTransaction({ ...body, projectId: id, organisationId, createdBy: session.user.id });
+  const {
+    amount,
+    type,
+    category,
+    description,
+    vendor,
+    invoiceNumber,
+    date,
+    tags = [],
+    location,
+    paymentMethod,
+    receiptUrl
+  } = body;
+
+  // Validate required fields
+  if (!amount || !type) {
+    return NextResponse.json({ 
+      error: 'Amount and type are required' 
+    }, { status: 400 })
+  }
+
+  // Find the budget for this project
+  const budget = await Budget.findOne({ projectId: id, organisationId })
+  if (!budget) {
+    return NextResponse.json({ 
+      error: 'Budget not found for this project' 
+    }, { status: 404 })
+  }
+
+  // Create transaction
+  const tx = new BudgetTransaction({ 
+    ...body, 
+    budgetId: budget._id,
+    projectId: id, 
+    organisationId, 
+    createdBy: session.user.id,
+    date: date ? new Date(date) : new Date(),
+    tags: tags || [],
+    status: 'approved' // Auto-approve for now
+  });
+  
   await tx.save();
-  return NextResponse.json(tx, { status: 201 });
+
+  // Update budget category spent amount
+  if (category && budget.categories) {
+    const categoryIndex = budget.categories.findIndex(cat => cat.name === category)
+    if (categoryIndex !== -1) {
+      budget.categories[categoryIndex].spentAmount += type === 'expense' ? amount : -amount
+      await budget.save()
+    }
+  }
+
+  return NextResponse.json(await tx.populate('createdBy', 'name email'), { status: 201 });
 }
 
 export async function PATCH(

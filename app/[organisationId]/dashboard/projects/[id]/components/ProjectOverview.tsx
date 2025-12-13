@@ -31,6 +31,8 @@ export default function ProjectOverview({ projectId, organisationId }: ProjectOv
   const [analytics, setAnalytics] = useState<any>(null)
   const [budget, setBudget] = useState<any>(null)
   const [milestones, setMilestones] = useState<any[]>([])
+  const [sprints, setSprints] = useState<any[]>([])
+  const [currentSprint, setCurrentSprint] = useState<any>(null)
   const [editOpen, setEditOpen] = useState(false)
 
   useEffect(() => {
@@ -53,6 +55,14 @@ export default function ProjectOverview({ projectId, organisationId }: ProjectOv
         const milestonesRes = await fetch(`/api/${organisationId}/milestones?projectId=${projectId}`)
         if (milestonesRes.ok) {
           setMilestones(await milestonesRes.json())
+        }
+        const sprintsRes = await fetch(`/api/${organisationId}/sprints?projectId=${projectId}`)
+        if (sprintsRes.ok) {
+          const sprintsData = await sprintsRes.json()
+          setSprints(sprintsData)
+          // Find current sprint
+          const activeSprint = sprintsData.find((sprint: any) => sprint.state === 'active')
+          setCurrentSprint(activeSprint)
         }
       } catch (error) {
         console.error('Failed to fetch project data:', error)
@@ -291,69 +301,172 @@ export default function ProjectOverview({ projectId, organisationId }: ProjectOv
         </CardContent>
       </Card>
 
+      {/* Current Sprint Section */}
+      {currentSprint && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              Current Sprint: {currentSprint.name}
+            </CardTitle>
+            <CardDescription>
+              {currentSprint.goal && `Goal: ${currentSprint.goal}`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div>
+                <div className="text-sm text-gray-600">Duration</div>
+                <div className="text-lg font-semibold">{currentSprint.duration || 0} days</div>
+                <div className="text-xs text-gray-500">{currentSprint.daysRemaining || 0} days left</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">Progress</div>
+                <div className="text-lg font-semibold">{currentSprint.completionPercentage || 0}%</div>
+                <Progress value={currentSprint.completionPercentage || 0} className="mt-1" />
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">Story Points</div>
+                <div className="text-lg font-semibold">
+                  {currentSprint.completedPoints || 0}/{currentSprint.committedPoints || 0}
+                </div>
+                <div className="text-xs text-gray-500">Completed/Committed</div>
+              </div>
+              <div>
+                <div className="text-sm text-gray-600">Velocity</div>
+                <div className="text-lg font-semibold">{currentSprint.velocity || 0}</div>
+                <div className="text-xs text-gray-500">Points per sprint</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enhanced Agile Analytics */}
       {analytics && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Velocity (last 3 sprints)</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <TrendingUp className="h-5 w-5" />
+                Agile Analytics
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analytics.velocityPointsLast3Sprints || 0} pts</div>
-              <p className="text-xs text-muted-foreground">Total story points completed</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{analytics.velocityPointsLast3Sprints || 0}</div>
+                  <div className="text-sm text-gray-600">Avg Velocity (3 sprints)</div>
+                  <div className="text-xs text-gray-500">Story points</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{analytics.leadTimeAvgDays || 0}</div>
+                  <div className="text-sm text-gray-600">Avg Lead Time</div>
+                  <div className="text-xs text-gray-500">Created to Done (days)</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">{analytics.cycleTimeAvgDays || 0}</div>
+                  <div className="text-sm text-gray-600">Avg Cycle Time</div>
+                  <div className="text-xs text-gray-500">In Progress to Done (days)</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-purple-600">{analytics.throughputPerWeek || 0}</div>
+                  <div className="text-sm text-gray-600">Throughput</div>
+                  <div className="text-xs text-gray-500">Tasks per week</div>
+                </div>
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Lead Time (avg)</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.leadTimeAvgDays || 0} days</div>
-              <p className="text-xs text-muted-foreground">Created to Done</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Cycle Time (avg)</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.cycleTimeAvgDays || 0} days</div>
-              <p className="text-xs text-muted-foreground">In-Progress to Done</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">WIP</CardTitle>
-              <AlertCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.wipCount || 0}</div>
-              <p className="text-xs text-muted-foreground">In-progress and review</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Backlog</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{analytics.backlogCount || 0}</div>
-              <p className="text-xs text-muted-foreground">Items waiting</p>
-            </CardContent>
-          </Card>
-          {analytics.burndown && (
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Burndown</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardHeader>
+                <CardTitle className="text-lg">Work in Progress</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm">Committed: {analytics.burndown.committedPoints} pts</div>
-                <div className="text-sm">Completed: {analytics.burndown.completedPoints} pts</div>
-                <div className="text-sm">Remaining: {analytics.burndown.remainingPoints} pts</div>
-                <div className="text-xs text-muted-foreground">Days left: {analytics.burndown.daysLeft}</div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span>Current WIP</span>
+                    <Badge variant={analytics.wipCount > 5 ? "destructive" : "secondary"}>
+                      {analytics.wipCount || 0}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Backlog Items</span>
+                    <Badge variant="outline">{analytics.backlogCount || 0}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Code Review</span>
+                    <Badge variant="outline">{analytics.reviewCount || 0}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Blocked Items</span>
+                    <Badge variant={analytics.blockedCount > 0 ? "destructive" : "secondary"}>
+                      {analytics.blockedCount || 0}
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Sprint Health</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span>Sprint Success Rate</span>
+                    <Badge variant={analytics.sprintSuccessRate >= 80 ? "default" : "secondary"}>
+                      {analytics.sprintSuccessRate || 0}%
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>On-Time Delivery</span>
+                    <Badge variant={analytics.onTimeDeliveryRate >= 75 ? "default" : "secondary"}>
+                      {analytics.onTimeDeliveryRate || 0}%
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Quality Score</span>
+                    <Badge variant={analytics.qualityScore >= 90 ? "default" : "secondary"}>
+                      {analytics.qualityScore || 0}%
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Team Morale</span>
+                    <Badge variant={analytics.teamMorale >= 4 ? "default" : "secondary"}>
+                      {analytics.teamMorale || 0}/5
+                    </Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {analytics.burndown && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Current Sprint Burndown</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-xl font-bold text-blue-600">{analytics.burndown.committedPoints || 0}</div>
+                    <div className="text-sm text-gray-600">Committed Points</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-xl font-bold text-green-600">{analytics.burndown.completedPoints || 0}</div>
+                    <div className="text-sm text-gray-600">Completed Points</div>
+                  </div>
+                  <div className="text-center p-4 bg-orange-50 rounded-lg">
+                    <div className="text-xl font-bold text-orange-600">{analytics.burndown.remainingPoints || 0}</div>
+                    <div className="text-sm text-gray-600">Remaining Points</div>
+                  </div>
+                </div>
+                <div className="mt-4 text-center text-sm text-gray-600">
+                  {analytics.burndown.daysLeft || 0} days remaining in sprint
+                </div>
               </CardContent>
             </Card>
           )}
